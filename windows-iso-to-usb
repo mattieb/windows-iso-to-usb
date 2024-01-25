@@ -1,0 +1,53 @@
+#!/bin/sh
+
+set -e
+
+echo The following disk will be ERASED:
+echo
+diskutil list "${2}"
+echo
+echo Press Return to confirm, or Control-C to abort.
+read
+
+set -x
+
+iso="${1}"
+disk="${2}"
+iso_mount="$(mktemp -d)"
+disk_mount="$(mktemp -d)"
+wim_workdir="$(mktemp -d)"
+
+__cleanup() {
+    set +e
+    diskutil eject "${iso_mount}"
+    diskutil unmount "${disk_mount}"
+    rmdir "${iso_mount}" "${disk_mount}"
+    rm -rf "${wim_workdir}"
+}
+trap __cleanup EXIT
+
+hdiutil attach "${iso}" -mountpoint "${iso_mount}"
+
+source_esd="${iso_mount}/sources/install.esd"
+source_wim="${iso_mount}/sources/install.wim"
+
+if [ -f "${source_esd}" ]; then
+    splittable_wim="${wim_workdir}/install.wim"
+    wimexport "${source_esd}" all "${splittable_wim}" --compress=LZX --chunk-size 32K
+elif [ -f "${source_wim}" ]; then
+    splittable_wim="${source_wim}"
+else
+    set +x
+    echo No usable Windows image found. >&2
+    exit 1
+fi
+
+diskutil eraseDisk fat32 ESD-USB MBR "${disk}"
+diskutil unmountDisk "${disk}"
+diskutil mount -mountPoint "${disk_mount}" "${disk}"s1
+
+pushd ${iso_mount}
+rsync -rtP --exclude=install.esd --exclude=install.wim . ${disk_mount}/
+popd
+
+wimsplit "${splittable_wim}" "${disk_mount}/sources/install.swm" 3800

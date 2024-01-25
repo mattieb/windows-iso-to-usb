@@ -1,0 +1,7 @@
+# check the device!
+diskutil eraseDisk fat32 ESD-USB MBR /dev/disk4
+cd /Volumes/ESD-USB
+cp -Rv /Volumes/ESD-ISO/* 
+
+# we might need to split install.esd in the future, see wimsplit
+
