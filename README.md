@@ -38,7 +38,9 @@ Some ISO images (such as the ones created by [windows-esd-to-iso](https://github
 
 ## Caveats
 
-While this tool will likely operate on ARM ISOs, I have not tested the produced USB images.
+- While this tool will likely operate on ARM ISOs, I have not tested the produced USB images.
+
+- The "install" images are compressed with LZX compression, instead of LZMS compression like the images produced by the Windows Media Creation Tool. This does not materially affect the produced installer, and is [due to wimlib design](https://wimlib.net/forums/viewtopic.php?t=702). I do not consider this an issue.
 
 ## Licensing
 
